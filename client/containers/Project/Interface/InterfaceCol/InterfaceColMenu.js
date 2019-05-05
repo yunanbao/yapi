@@ -567,8 +567,8 @@ export default class InterfaceColMenu extends Component {
       list = list.filter(item => {
 
         item.caseList = item.caseList.filter(inter => {
-          if (inter.casename.indexOf(this.state.filterValue) === -1
-          && inter.path.indexOf(this.state.filterValue) === -1
+          if (inter.casename.indexOf(this.state.filterValue) === -1 && item.name.indexOf(this.state.filterValue) === -1
+          && inter.path.indexOf(this.state.filterValue) === -1 && item._id.toString().indexOf(this.state.filterValue) === -1
           ) {
             return false;
           }

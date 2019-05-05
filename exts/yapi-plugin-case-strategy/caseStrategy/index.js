@@ -191,9 +191,11 @@ class CaseStrategy extends Component {
 
   newStrategy = async () => {
     const currProjectId = this.props.match.params.id;
+    const uid = this.props.projectMsg.uid;
     let sgy = {
       project_id: currProjectId,
-      strategy_name: this.state.editStrategyName
+      strategy_name: this.state.editStrategyName,
+      uid: uid
     };
     await axios.post('/api/plugin/case_strategy/save', sgy).then(res => {
       if (res.data.errcode === 0) {
@@ -243,13 +245,23 @@ class CaseStrategy extends Component {
     });
   };
 
-  getOption = (moduleId) => {
+  getOption = (moduleId, prep) => {
     let children = [];
     let size = this.state.caseList.length;
     for (let i = 0; i < size; i++) {
       let item = this.state.caseList[i];
+
       if(item.module_id === moduleId) {
-        children.push(<Option key={item._id}>{item.name}</Option>);
+        if(prep) {
+          if(item.name.toLowerCase().indexOf('prep') > -1) {
+            children.push(<Option key={item._id}>{item.name}</Option>);
+          }
+        }else {
+          if(item.name.toLowerCase().indexOf('prep') === -1) {
+            children.push(<Option key={item._id}>{item.name}</Option>);
+          }
+        }
+
       }
     }
     return children;
@@ -268,10 +280,11 @@ class CaseStrategy extends Component {
       tmpValue.cron = this.state.random_corn;
     }
     if(!tmpValue.env_id) {
-      let size = this.state.envList.length;
-      if(size > 0) {
-        tmpValue.env_id = this.state.envList[0]._id;
-      }
+      // let size = this.state.envList.length;
+      // if(size > 0) {
+      //   tmpValue.env_id = this.state.envList[0]._id;
+      // }
+      // tmpValue.env_id = '请选择';
     }
     let before = currentStrategy.before;
     let cases = currentStrategy.cases;
@@ -306,35 +319,42 @@ class CaseStrategy extends Component {
   };
 
   handleSubmit = () => {
-    const { is_open, env_id, cron } = this.props.form.getFieldsValue();
-    let tmpValue = {
-      _id: this.state.currentStrategy._id,
-      is_open: is_open,
-      env_id: env_id,
-      cron: cron
-    };
 
-    let size = this.state.moduleList.length;
-    let beforeObj = {};
-    let casesObj = {};
-    for(let i = 0; i < size; i++) {
-      let modId = this.state.moduleList[i]._id;
+    this.props.form.validateFields(async (err) => {
+      if (!err) {
+        const { is_open, env_id, cron } = this.props.form.getFieldsValue();
+        let tmpValue = {
+          _id: this.state.currentStrategy._id,
+          uid: this.state.currentStrategy.uid,
+          project_id: this.state.currentStrategy.project_id,
+          is_open: is_open,
+          env_id: env_id,
+          cron: cron
+        };
 
-      let before = {};
-      before.list = this.props.form.getFieldsValue()['before' + modId];
-      before.count = this.props.form.getFieldsValue()['beforeCount' + modId];
-      beforeObj[modId] = before;
+        let size = this.state.moduleList.length;
+        let beforeObj = {};
+        let casesObj = {};
+        for(let i = 0; i < size; i++) {
+          let modId = this.state.moduleList[i]._id;
 
-      let cases = {};
-      cases.list = this.props.form.getFieldsValue()[modId];
-      cases.checked = this.props.form.getFieldsValue()['checked' + modId];
-      casesObj[modId] = cases;
-    }
+          let before = {};
+          before.list = this.props.form.getFieldsValue()['before' + modId];
+          before.count = this.props.form.getFieldsValue()['beforeCount' + modId];
+          beforeObj[modId] = before;
 
-    tmpValue.before = JSON.stringify(beforeObj);
-    tmpValue.cases = JSON.stringify(casesObj);
+          let cases = {};
+          cases.list = this.props.form.getFieldsValue()[modId];
+          cases.checked = this.props.form.getFieldsValue()['checked' + modId];
+          casesObj[modId] = cases;
+        }
 
-    this.editStrategy(tmpValue);
+        tmpValue.before = JSON.stringify(beforeObj);
+        tmpValue.cases = JSON.stringify(casesObj);
+
+        this.editStrategy(tmpValue);
+      }
+    });
   };
 
 
@@ -396,7 +416,7 @@ class CaseStrategy extends Component {
                 }}
             >
             <div className="right-content">
-              <div style={{height: 40}}>==========================STEP1：策略基本信息</div>
+              <div style={{height: 40, fontSize: 18}}>STEP1：策略基本信息</div>
               <Form>
                 <FormItem label="开启策略" {...formItemLayout}>
                   {getFieldDecorator('is_open', {
@@ -428,14 +448,14 @@ class CaseStrategy extends Component {
                   </Select>)}
                 </FormItem>
 
-                <div style={{height: 40}}>==========================STEP2：数据准备，选择模块中以Before开头的测试集，并设置运行次数</div>
+                <div style={{height: 40, fontSize: 18}}>STEP2：数据准备，选择模块中以Prep开头的测试集（白名单），并设置运行次数</div>
                 {
                   this.state.moduleList.map((item, index) => (
                     <FormItem {...formItemLayout} label={item.name} key={index}>
                       {getFieldDecorator("before" + item._id, {
                         })(<Select mode="tags">
                           {
-                            this.getOption(item._id)
+                            this.getOption(item._id, true)
                           }
                         </Select>)}
                       循环执行次数&nbsp;
@@ -446,14 +466,14 @@ class CaseStrategy extends Component {
                   ))
                 }
 
-                <div style={{height: 40}}>==========================STEP3：按模块分别执行测试集（黑名单），模块中被选择的测试集将不被执行</div>
+                <div style={{height: 40, fontSize: 18}}>STEP3：按模块分别执行测试集（黑名单），模块中被选择的测试集将不被执行</div>
                 {
                   this.state.moduleList.map((item, index) => (
                     <FormItem {...formItemLayout} label={item.name} key={index}>
                       {getFieldDecorator("" + item._id, {
                         })(<Select mode="tags">
                           {
-                            this.getOption(item._id)
+                            this.getOption(item._id, false)
                           }
                         </Select>)}
                       {getFieldDecorator("checked" + item._id, {

@@ -9,13 +9,13 @@ class caseStrategyModel extends baseModel {
   getSchema() {
     return {
       project_id: { type: Number, required: true },
+      uid: { type: Number, required: true },
       strategy_name: { type: String, required: true},
       is_open: { type: Boolean, default: false },
       env_id: String,
       cron: String,
       before: String,
-      cases: String,
-      after: String
+      cases: String
     };
   }
 
@@ -37,6 +37,14 @@ class caseStrategyModel extends baseModel {
       })
       .sort({ _id: -1 })
       .exec();
+  }
+
+  listAll() {
+    return this.model
+        .find({
+        })
+        .sort({ _id: -1 })
+        .exec();
   }
 
   get(id) {
@@ -99,18 +107,6 @@ class caseStrategyModel extends baseModel {
     );
   }
 
-  upBefore(id, before) {
-    return this.model.update(
-        {
-          _id: id
-        },
-        {
-          before: before
-        },
-        { runValidators: true }
-    );
-  }
-
   upCase(id, cases) {
     return this.model.update(
         {
@@ -118,18 +114,6 @@ class caseStrategyModel extends baseModel {
         },
         {
           cases: cases
-        },
-        { runValidators: true }
-    );
-  }
-
-  upAfter(id, after) {
-    return this.model.update(
-        {
-          _id: id
-        },
-        {
-          after: after
         },
         { runValidators: true }
     );

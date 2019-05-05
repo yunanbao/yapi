@@ -1,6 +1,7 @@
 const baseController = require('controllers/base.js');
 const caseStrategyModel = require('./caseStrategyModel.js');
 const projectModel = require('models/project.js');
+const strategyUtil = require('./caseStrategyUtils');
 const yapi = require('yapi.js');
 
 class strategyController extends baseController {
@@ -8,6 +9,7 @@ class strategyController extends baseController {
     super(ctx);
     this.Model = yapi.getInst(caseStrategyModel);
     this.projectModel = yapi.getInst(projectModel);
+    this.strategyUtil = yapi.getInst(strategyUtil);
   }
 
   async save(ctx) {
@@ -15,7 +17,8 @@ class strategyController extends baseController {
       let params = ctx.request.body;
       params = yapi.commons.handleParams(params, {
         strategy_name: 'string',
-        project_id: 'number'
+        project_id: 'number',
+        uid: 'number'
       });
 
       if (!params.project_id) {
@@ -32,7 +35,8 @@ class strategyController extends baseController {
 
       let result = await this.Model.save({
         strategy_name: params.strategy_name,
-        project_id: params.project_id
+        project_id: params.project_id,
+        uid: params.uid
       });
       let username = this.getUsername();
       yapi.commons.saveLog({
@@ -95,6 +99,11 @@ class strategyController extends baseController {
       console.log(params);
       let result = await this.Model.up(params);
       ctx.body = yapi.commons.resReturn(result);
+
+      this.strategyUtil.deleteSyncJob(params._id);
+      if(params.is_open){
+        this.strategyUtil.addSyncJob(params._id, params.project_id, params.env_id, params.cron, params.before, params.cases, params.uid);
+      }
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }
@@ -105,6 +114,8 @@ class strategyController extends baseController {
       let id = ctx.query.id;
       let result = await this.Model.del(id);
       ctx.body = yapi.commons.resReturn(result);
+
+      this.strategyUtil.deleteSyncJob(id);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }

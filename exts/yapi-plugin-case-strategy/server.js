@@ -1,14 +1,9 @@
 const yapi = require('yapi.js');
-const mongoose = require('mongoose');
 const controller = require('./controller');
+const caseStrategyUtils = require('./caseStrategyUtils.js');
 
 module.exports = function() {
-  yapi.connect.then(function() {
-    let Col = mongoose.connection.db.collection('wiki');
-    Col.createIndex({
-      project_id: 1
-    });
-  });
+  yapi.getInst(caseStrategyUtils);
 
   this.bindHook('add_router', function(addRouter) {
     addRouter({
