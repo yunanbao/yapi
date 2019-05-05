@@ -1,7 +1,7 @@
 const baseController = require('controllers/base.js');
 const interfaceModel = require('models/interface.js');
 const projectModel = require('models/project.js');
-// const wikiModel = require('../yapi-plugin-wiki/wikiModel.js');
+// const wikiModel = require('../yapi-plugin-wiki/caseStrategyModel.js');
 const interfaceCatModel = require('models/interfaceCat.js');
 const yapi = require('yapi.js');
 const markdownIt = require('markdown-it');
@@ -17,7 +17,7 @@ class exportController extends baseController {
     this.catModel = yapi.getInst(interfaceCatModel);
     this.interModel = yapi.getInst(interfaceModel);
     this.projectModel = yapi.getInst(projectModel);
-    
+
   }
 
   async handleListClass(pid, status) {
@@ -34,7 +34,7 @@ class exportController extends baseController {
         newResult.push(item);
       }
     }
-    
+
     return newResult;
   }
 

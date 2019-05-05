@@ -1,0 +1,45 @@
+.left-menu {
+  .left-menu-top {
+    background-color: #ddd;
+    height: 44px;
+  }
+  .new-btn {
+    margin-right: 8px;
+    margin-top: 6px;
+    float: right;
+  }
+  .left-list {
+    overflow: auto;
+    clear: both;
+  }
+  .left-list-item {
+    size: 16px;
+    height: 50px;
+    line-height: 50px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    padding-left: 16px;
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    .btns {
+      display: none;
+      min-width: 60px;
+    }
+  }
+  .left-list-item-selected {
+    background-color: #d5ebfc;
+  }
+  .left-list-item:hover {
+    background-color: #d5ebfc;
+    .btns {
+      display: block;
+    }
+  }
+}
+
+.right-content {
+  padding: 16px;
+}
