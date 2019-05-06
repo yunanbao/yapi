@@ -110,7 +110,7 @@ class openController extends baseController {
                   }
               });
           });
-      } 
+      }
       if(ctx.params.url){
         content = await syncGet(ctx.params.url);
       }else if(content.indexOf('http://') === 0 || content.indexOf('https://') === 0){
@@ -174,9 +174,9 @@ class openController extends baseController {
     return result;
   }
   async runAutoTest(ctx) {
-    if (!this.$tokenAuth) {
-      return (ctx.body = yapi.commons.resReturn(null, 40022, 'token 验证失败'));
-    }
+    // if (!this.$tokenAuth) {
+    //   return (ctx.body = yapi.commons.resReturn(null, 40022, 'token 验证失败'));
+    // }
     // console.log(1231312)
     const token = ctx.query.token;
 
@@ -365,7 +365,7 @@ class openController extends baseController {
   }
 
   async handleScriptTest(interfaceData, response, validRes, requestParams) {
-    
+
     try {
       let test = await yapi.commons.runCaseScript({
         response: response,

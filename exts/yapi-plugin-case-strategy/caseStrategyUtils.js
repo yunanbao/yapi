@@ -7,8 +7,8 @@ const strategyModel = require('./caseStrategyModel.js');
 const tokenModel = require('models/token.js');
 const yapi = require('yapi.js')
 const sha = require('sha.js');
-const axios = require('axios');
-const https = require('https');
+// const axios = require('axios');
+// const https = require('https');
 const { getToken } = require('utils/token');
 const jobMap = new Map();
 
@@ -66,16 +66,11 @@ class syncUtils {
                 break;
             }
         }
-      console.log('envName');
-      console.log(envName);
         if(!envName) {
             return;
         }
 
         let projectToken = await this.getProjectToken(projectId, uid);
-        console.log('项目token');
-        console.log(projectToken);
-
         let scheduleItem = schedule.scheduleJob(cron, async () => {
             this.syncInterface(projectId, envName, projectToken, before, cases, checked_step3);
         });
@@ -102,7 +97,21 @@ class syncUtils {
         //获取项目下的所有测试集
         let caseList = await this.interfaceColModel.list(projectId);
 
-        let initUrl = '/api/open/run_auto_test?token=' + projectToken + '&env_' + projectId + '=' + envName + '&mode=html&email=true&download=false';
+        // let initUrl = '/api/open/run_auto_test?token=' + projectToken + '&env_' + projectId + '=' + envName + '&mode=html&email=true&download=false';
+        let ctx = {
+          query: {},
+          params: {}
+        };
+        ctx.query.token = projectToken;
+        ctx.params = {
+          id: '',
+          token: projectToken,
+          mode: 'html',
+          email: false,
+          download: false,
+          project_id: projectId
+        };
+        ctx.params['env_' + projectId] = envName;
 
         if(before) {
             before = JSON.parse(before);
@@ -118,8 +127,9 @@ class syncUtils {
                   let listSize = list.length;
                   for(let c= 0; c < count; c++) {
                     for(let j = 0; j < listSize; j++) {
-                      let url = initUrl + '&id=' + list[j];
-                      this.sendCaseRequest(url);
+                      // let url = initUrl + '&id=' + list[j];
+                      ctx.params.id = list[j];
+                      this.sendCaseRequest(ctx);
                     }
                   }
                 }
@@ -144,8 +154,9 @@ class syncUtils {
             if(runCaseList && runCaseList.length > 0){
               let listSize = runCaseList.length;
               for(let j = 0; j < listSize; j++) {
-                let url = initUrl + '&id=' + runCaseList[j]._id;
-                this.sendCaseRequest(url);
+                // let url = initUrl + '&id=' + runCaseList[j]._id;
+                ctx.params.id = runCaseList[j]._id;
+                this.sendCaseRequest(ctx);
               }
             }
           }
@@ -179,19 +190,22 @@ class syncUtils {
         return caseName.toLowerCase().indexOf('prep') > -1
     }
 
-    async sendCaseRequest(url) {
-      url = 'http://127.0.0.1:8000' + url;
-      console.log('请求的url：' + url);
-      await axios({
-        method: 'get',
-        url: url,
-        headers: {},
-        timeout: 5000,
-        maxRedirects: 0,
-        httpsAgent: new https.Agent({
-          rejectUnauthorized: false
-        })
-      })
+    async sendCaseRequest(ctx) {
+      // url = 'http://127.0.0.1:8000' + url;
+      // console.log('请求的url：' + url);
+      // await axios({
+      //   method: 'get',
+      //   url: url,
+      //   headers: {},
+      //   timeout: 5000,
+      //   maxRedirects: 0,
+      //   httpsAgent: new https.Agent({
+      //     rejectUnauthorized: false
+      //   })
+      // })
+      console.log('----------------');
+      console.log(ctx);
+      this.openController.runAutoTest(ctx);
     }
 
     getSyncJob(_id) {
