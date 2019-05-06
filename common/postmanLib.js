@@ -239,10 +239,10 @@ function sandboxByBrowser(context = {}, script) {
 }
 
 /**
- * 
- * @param {*} defaultOptions 
- * @param {*} preScript 
- * @param {*} afterScript 
+ *
+ * @param {*} defaultOptions
+ * @param {*} preScript
+ * @param {*} afterScript
  * @param {*} commonContext  负责传递一些业务信息，crossRequest 不关注具体传什么，只负责当中间人
  */
 async function crossRequest(defaultOptions, preScript, afterScript, commonContext = {}) {
@@ -325,7 +325,7 @@ async function crossRequest(defaultOptions, preScript, afterScript, commonContex
           res = json_parse(data.res.body);
           data.res.body = res;
         }
-        if (!isNode) message = '请求异常，请检查 chrome network 错误信息... https://juejin.im/post/5c888a3e5188257dee0322af 通过该链接查看教程"）';
+        if (!isNode) message = '请求异常，请检查接口服务地址是否使用了不可信的Https证书（请在浏览器打开服务地址，选择"信任"后，返回本页面重试）';
         if (isNaN(data.res.status)) {
           reject({
             body: res || message,
