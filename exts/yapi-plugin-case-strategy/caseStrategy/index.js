@@ -274,7 +274,8 @@ class CaseStrategy extends Component {
     let tmpValue = {
       is_open: currentStrategy.is_open,
       env_id: currentStrategy.env_id,
-      cron: currentStrategy.cron
+      cron: currentStrategy.cron,
+      checked_step3: currentStrategy.checked_step3
     };
     if(!tmpValue.cron) {
       tmpValue.cron = this.state.random_corn;
@@ -302,12 +303,12 @@ class CaseStrategy extends Component {
       tmpValue['beforeCount' + mod._id] = 1;
       tmpValue[mod._id] = [];
       tmpValue['checked' + mod._id] = false;
-      if(before){
+      if(before && before[mod._id]){
         let res = before[mod._id];
         tmpValue['before' + mod._id] = res.list;
         tmpValue['beforeCount' + mod._id] = res.count ? res.count : 1;
       }
-      if(cases) {
+      if(cases && cases[mod._id]) {
         let res = cases[mod._id];
         tmpValue[mod._id] = res.list;
         tmpValue['checked' + mod._id] = res.checked;
@@ -322,14 +323,15 @@ class CaseStrategy extends Component {
 
     this.props.form.validateFields(async (err) => {
       if (!err) {
-        const { is_open, env_id, cron } = this.props.form.getFieldsValue();
+        const { is_open, env_id, cron, checked_step3 } = this.props.form.getFieldsValue();
         let tmpValue = {
           _id: this.state.currentStrategy._id,
           uid: this.state.currentStrategy.uid,
           project_id: this.state.currentStrategy.project_id,
           is_open: is_open,
           env_id: env_id,
-          cron: cron
+          cron: cron,
+          checked_step3: checked_step3
         };
 
         let size = this.state.moduleList.length;
@@ -467,6 +469,9 @@ class CaseStrategy extends Component {
                 }
 
                 <div style={{height: 40, fontSize: 18}}>STEP3：按模块分别执行测试集（黑名单），模块中被选择的测试集将不被执行</div>
+                {getFieldDecorator("checked_step3", {
+                  valuePropName: 'checked'
+                })(<Checkbox>停用Step3</Checkbox>)}
                 {
                   this.state.moduleList.map((item, index) => (
                     <FormItem {...formItemLayout} label={item.name} key={index}>

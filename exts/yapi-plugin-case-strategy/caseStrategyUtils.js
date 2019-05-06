@@ -33,7 +33,7 @@ class syncUtils {
         for (let i = 0, len = allSyncJob.length; i < len; i++) {
             let syncItem = allSyncJob[i];
             if (syncItem.is_open) {
-                this.addSyncJob(syncItem._id, syncItem.project_id, syncItem.env_id, syncItem.cron, syncItem.before, syncItem.cases, syncItem.uid);
+                this.addSyncJob(syncItem._id, syncItem.project_id, syncItem.env_id, syncItem.cron, syncItem.before, syncItem.cases, syncItem.uid, syncItem.checked_step3);
             }
         }
     }
@@ -42,7 +42,7 @@ class syncUtils {
      * 新增同步任务
      * _id: 策略id
      */
-    async addSyncJob(_id, projectId, env_id, cron, before, cases, uid) {
+    async addSyncJob(_id, projectId, env_id, cron, before, cases, uid, checked_step3) {
         // 判断必须条件
         if(!env_id || !cron || !projectId) {
             return;
@@ -77,7 +77,7 @@ class syncUtils {
         console.log(projectToken);
 
         let scheduleItem = schedule.scheduleJob(cron, async () => {
-            this.syncInterface(projectId, envName, projectToken, before, cases);
+            this.syncInterface(projectId, envName, projectToken, before, cases, checked_step3);
         });
 
         //判断是否已经存在这个任务
@@ -89,7 +89,7 @@ class syncUtils {
     }
 
     //同步接口
-    async syncInterface(projectId, envName, projectToken, before, cases) {
+    async syncInterface(projectId, envName, projectToken, before, cases, checked_step3) {
         //api/open/run_auto_test?id=1987&token=5a4e4a146bf790ea90fe9125f020efb435934107258fe4cc3be8d87dcdfd9fbb&env_19=EnVar&mode=html&email=true&download=false
 
         //获取项目下的所有的模块
@@ -126,7 +126,7 @@ class syncUtils {
             }
         }
 
-      if(cases) {
+      if(!checked_step3 && cases) {
         cases = JSON.parse(cases);
         for(let i = 0; i < moduleSize; i++) {
           let tmpModule = moduleList[i];

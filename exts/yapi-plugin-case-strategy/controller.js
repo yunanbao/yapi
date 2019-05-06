@@ -96,13 +96,12 @@ class strategyController extends baseController {
         _id: 'number'
       });
 
-      console.log(params);
       let result = await this.Model.up(params);
       ctx.body = yapi.commons.resReturn(result);
 
       this.strategyUtil.deleteSyncJob(params._id);
       if(params.is_open){
-        this.strategyUtil.addSyncJob(params._id, params.project_id, params.env_id, params.cron, params.before, params.cases, params.uid);
+        this.strategyUtil.addSyncJob(params._id, params.project_id, params.env_id, params.cron, params.before, params.cases, params.uid, params.checked_step3);
       }
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
