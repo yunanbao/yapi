@@ -177,7 +177,6 @@ class openController extends baseController {
     // if (!this.$tokenAuth) {
     //   return (ctx.body = yapi.commons.resReturn(null, 40022, 'token 验证失败'));
     // }
-    // console.log(1231312)
     const token = ctx.query.token;
 
     const projectId = ctx.params.project_id;
@@ -263,13 +262,21 @@ class openController extends baseController {
       list: testList
     };
 
-    if (ctx.params.email === true && reportsResult.message.failedNum !== 0) {
-      let autoTestUrl = `${
-        ctx.request.origin
-      }/api/open/run_auto_test?id=${id}&token=${token}&mode=${ctx.params.mode}`;
-      yapi.commons.sendNotice(projectId, {
-        title: `YApi自动化测试报告`,
-        content: `
+    if (reportsResult.message.failedNum !== 0) {
+      let envName = '';
+      let envKey = '';
+      if(curEnvList && curEnvList.length > 0){
+        envName = curEnvList[0].curEnv;
+        envKey = 'env_' + curEnvList[0].project_id;
+      }
+
+      if(ctx.params.email === true) {
+        let autoTestUrl = `${
+            ctx.request.origin
+            }/api/open/run_auto_test?id=${id}&token=${token}&${envKey}=${envName}&mode=${ctx.params.mode}`;
+        yapi.commons.sendNotice(projectId, {
+          title: `YApi自动化测试报告`,
+          content: `
         <html>
         <head>
         <title>测试报告</title>
@@ -283,7 +290,18 @@ class openController extends baseController {
         </div>
         </body>
         </html>`
-      });
+        });
+      }
+
+      let log = '\n测试环境：' + envName;
+      log += '\n测试集ID：' + id;
+      log += '\n测试结果：' + reportsResult.message.msg;
+      let size = reportsResult.list.length;
+      for(let i = 0; i < size; i++) {
+        log += '\napi：' + reportsResult.list[i].path;
+        log += '\nResponse：' + JSON.stringify(reportsResult.list[i].res_body);
+      }
+      yapi.commons.log(log, 'error');
     }
     let mode = ctx.params.mode || 'html';
     if(ctx.params.download === true) {

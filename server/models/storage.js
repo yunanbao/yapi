@@ -21,7 +21,7 @@ class stroageModel extends baseModel {
 
   getSchema() {
     return {
-      key: { type: Number, required: true },
+      key: { type: String, required: true },
       data: {
         type: String,
         default: ''

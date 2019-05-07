@@ -16,7 +16,6 @@ const jobMap = new Map();
 class syncUtils {
 
     constructor(ctx) {
-        yapi.commons.log("-------------------------------------caseStrategy constructor-----------------------------------------------");
         this.ctx = ctx;
         this.openController = yapi.getInst(openController);
         this.syncMode = yapi.getInst(strategyModel);
@@ -52,8 +51,6 @@ class syncUtils {
         if(envs) {
           envs = envs.env;
         }
-        console.log('环境列表' + env_id);
-        console.log(envs);
         if(!envs || envs.length === 0) {
             return;
         }
@@ -71,8 +68,9 @@ class syncUtils {
         }
 
         let projectToken = await this.getProjectToken(projectId, uid);
+        this.syncInterface(uid, projectId, envName, projectToken, before, cases, checked_step3);
         let scheduleItem = schedule.scheduleJob(cron, async () => {
-            this.syncInterface(projectId, envName, projectToken, before, cases, checked_step3);
+            this.syncInterface(uid, projectId, envName, projectToken, before, cases, checked_step3);
         });
 
         //判断是否已经存在这个任务
@@ -84,9 +82,7 @@ class syncUtils {
     }
 
     //同步接口
-    async syncInterface(projectId, envName, projectToken, before, cases, checked_step3) {
-        //api/open/run_auto_test?id=1987&token=5a4e4a146bf790ea90fe9125f020efb435934107258fe4cc3be8d87dcdfd9fbb&env_19=EnVar&mode=html&email=true&download=false
-
+    async syncInterface(uid, projectId, envName, projectToken, before, cases, checked_step3) {
         //获取项目下的所有的模块
         let moduleList = await this.moduleModel.list(projectId);
         if(!moduleList || moduleList.length === 0) {
@@ -97,7 +93,6 @@ class syncUtils {
         //获取项目下的所有测试集
         let caseList = await this.interfaceColModel.list(projectId);
 
-        // let initUrl = '/api/open/run_auto_test?token=' + projectToken + '&env_' + projectId + '=' + envName + '&mode=html&email=true&download=false';
         let ctx = {
           query: {},
           params: {}
@@ -105,6 +100,7 @@ class syncUtils {
         ctx.query.token = projectToken;
         ctx.params = {
           id: '',
+          uid: uid,
           token: projectToken,
           mode: 'html',
           email: false,
@@ -203,8 +199,6 @@ class syncUtils {
       //     rejectUnauthorized: false
       //   })
       // })
-      console.log('----------------');
-      console.log(ctx);
       this.openController.runAutoTest(ctx);
     }
 

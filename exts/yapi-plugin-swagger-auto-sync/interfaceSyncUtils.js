@@ -12,7 +12,6 @@ const jobMap = new Map();
 class syncUtils {
 
     constructor(ctx) {
-        yapi.commons.log("-------------------------------------swaggerSyncUtils constructor-----------------------------------------------");
         this.ctx = ctx;
         this.openController = yapi.getInst(openController);
         this.syncModel = yapi.getInst(syncModel);
@@ -137,11 +136,11 @@ class syncUtils {
 
     /**
      * 记录同步日志
-     * @param {*} errcode 
-     * @param {*} syncMode 
-     * @param {*} moremsg 
-     * @param {*} uid 
-     * @param {*} projectId 
+     * @param {*} errcode
+     * @param {*} syncMode
+     * @param {*} moremsg
+     * @param {*} uid
+     * @param {*} projectId
      */
     saveSyncLog(errcode, syncMode, moremsg, uid, projectId) {
         yapi.commons.saveLog({

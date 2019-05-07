@@ -247,7 +247,8 @@ function sandboxByBrowser(context = {}, script) {
  */
 async function crossRequest(defaultOptions, preScript, afterScript, commonContext = {}) {
   let options = Object.assign({}, defaultOptions);
-  const taskId = commonContext.projectId || options.taskId || Math.random() + '';
+  let refer = defaultOptions.headers ? defaultOptions.headers.Referer : '';
+  const taskId = refer || options.taskId || Math.random() + '';
   let urlObj = URL.parse(options.url, true),
     query = {};
   query = Object.assign(query, urlObj.query);
