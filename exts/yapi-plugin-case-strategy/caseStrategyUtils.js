@@ -11,6 +11,7 @@ const sha = require('sha.js');
 // const https = require('https');
 const { getToken } = require('utils/token');
 const jobMap = new Map();
+let runAutoCaseList = [];
 
 
 class syncUtils {
@@ -28,11 +29,12 @@ class syncUtils {
 
     //初始化定时任务
     async init() {
+        runAutoCaseList = [];
         let allSyncJob = await this.syncMode.listAll();
         for (let i = 0, len = allSyncJob.length; i < len; i++) {
             let syncItem = allSyncJob[i];
             if (syncItem.is_open) {
-                this.addSyncJob(syncItem._id, syncItem.project_id, syncItem.env_id, syncItem.cron, syncItem.before, syncItem.cases, syncItem.uid, syncItem.checked_step3);
+                this.addSyncJob(syncItem._id, syncItem.project_id, syncItem.env_id, syncItem.cron, syncItem.cases, syncItem.uid);
             }
         }
     }
@@ -41,7 +43,7 @@ class syncUtils {
      * 新增同步任务
      * _id: 策略id
      */
-    async addSyncJob(_id, projectId, env_id, cron, before, cases, uid, checked_step3) {
+    async addSyncJob(_id, projectId, env_id, cron, cases, uid) {
         // 判断必须条件
         if(!env_id || !cron || !projectId) {
             return;
@@ -68,9 +70,9 @@ class syncUtils {
         }
 
         let projectToken = await this.getProjectToken(projectId, uid);
-        this.syncInterface(uid, projectId, envName, projectToken, before, cases, checked_step3);
+        this.syncInterface(uid, projectId, envName, projectToken, cases);
         let scheduleItem = schedule.scheduleJob(cron, async () => {
-            this.syncInterface(uid, projectId, envName, projectToken, before, cases, checked_step3);
+            this.syncInterface(uid, projectId, envName, projectToken, cases);
         });
 
         //判断是否已经存在这个任务
@@ -82,7 +84,7 @@ class syncUtils {
     }
 
     //同步接口
-    async syncInterface(uid, projectId, envName, projectToken, before, cases, checked_step3) {
+    async syncInterface(uid, projectId, envName, projectToken, cases) {
         //获取项目下的所有的模块
         let moduleList = await this.moduleModel.list(projectId);
         if(!moduleList || moduleList.length === 0) {
@@ -105,34 +107,12 @@ class syncUtils {
           mode: 'html',
           email: false,
           download: false,
-          project_id: projectId
+          project_id: projectId,
+          moduleName: ''
         };
         ctx.params['env_' + projectId] = envName;
 
-        if(before) {
-            before = JSON.parse(before);
-            for(let i = 0; i < moduleSize; i++) {
-                let tmpModule = moduleList[i];
-                let bb = before[tmpModule._id];
-                if(!bb) {
-                    bb = {};
-                }
-                let list = bb.list ? bb.list : [];
-                let count = bb.count > 0 ? bb.count : 1;
-                if(list && list.length > 0){
-                  let listSize = list.length;
-                  for(let c= 0; c < count; c++) {
-                    for(let j = 0; j < listSize; j++) {
-                      // let url = initUrl + '&id=' + list[j];
-                      ctx.params.id = list[j];
-                      this.sendCaseRequest(ctx);
-                    }
-                  }
-                }
-            }
-        }
-
-      if(!checked_step3 && cases) {
+      if(cases) {
         cases = JSON.parse(cases);
         for(let i = 0; i < moduleSize; i++) {
           let tmpModule = moduleList[i];
@@ -152,14 +132,27 @@ class syncUtils {
               for(let j = 0; j < listSize; j++) {
                 // let url = initUrl + '&id=' + runCaseList[j]._id;
                 ctx.params.id = runCaseList[j]._id;
-                this.sendCaseRequest(ctx);
+                ctx.params.moduleName = tmpModule.name;
+                runAutoCaseList.push(JSON.parse(JSON.stringify(ctx)));
               }
             }
           }
         }
+        this.looperRunAutoTests();
       }
 
     }
+
+    looperRunAutoTests() {
+      if(runAutoCaseList && runAutoCaseList.length > 0) {
+        setTimeout(() => {
+          this.openController.runAutoTest(runAutoCaseList[0]);
+          runAutoCaseList.shift();
+          this.looperRunAutoTests();
+        }, 1000);
+      }
+    }
+
 
     getModuleCases(caseList, moduleId, exps) {
         if(!exps) {
@@ -184,22 +177,6 @@ class syncUtils {
             return false;
         }
         return caseName.toLowerCase().indexOf('prep') > -1
-    }
-
-    async sendCaseRequest(ctx) {
-      // url = 'http://127.0.0.1:8000' + url;
-      // console.log('请求的url：' + url);
-      // await axios({
-      //   method: 'get',
-      //   url: url,
-      //   headers: {},
-      //   timeout: 5000,
-      //   maxRedirects: 0,
-      //   httpsAgent: new https.Agent({
-      //     rejectUnauthorized: false
-      //   })
-      // })
-      this.openController.runAutoTest(ctx);
     }
 
     getSyncJob(_id) {

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {Layout, Button, message, Icon, Input, Modal, Form, Switch, Select, InputNumber, Checkbox} from 'antd';
+import {Layout, Button, message, Icon, Input, Modal, Form, Switch, Select, Checkbox} from 'antd';
 import { connect } from 'react-redux';
 import axios from 'axios';
 import PropTypes from 'prop-types';
@@ -245,23 +245,16 @@ class CaseStrategy extends Component {
     });
   };
 
-  getOption = (moduleId, prep) => {
+  getOption = (moduleId) => {
     let children = [];
     let size = this.state.caseList.length;
     for (let i = 0; i < size; i++) {
       let item = this.state.caseList[i];
 
       if(item.module_id === moduleId) {
-        if(prep) {
-          if(item.name.toLowerCase().indexOf('prep') > -1) {
-            children.push(<Option key={item._id}>{item.name}</Option>);
-          }
-        }else {
-          if(item.name.toLowerCase().indexOf('prep') === -1) {
-            children.push(<Option key={item._id}>{item.name}</Option>);
-          }
+        if(item.name.toLowerCase().indexOf('prep') === -1) {
+          children.push(<Option key={item._id}>{item.name}</Option>);
         }
-
       }
     }
     return children;
@@ -274,8 +267,7 @@ class CaseStrategy extends Component {
     let tmpValue = {
       is_open: currentStrategy.is_open,
       env_id: currentStrategy.env_id,
-      cron: currentStrategy.cron,
-      checked_step3: currentStrategy.checked_step3
+      cron: currentStrategy.cron
     };
     if(!tmpValue.cron) {
       tmpValue.cron = this.state.random_corn;
@@ -287,11 +279,7 @@ class CaseStrategy extends Component {
       // }
       // tmpValue.env_id = '请选择';
     }
-    let before = currentStrategy.before;
     let cases = currentStrategy.cases;
-    if(before) {
-      before = JSON.parse(before);
-    }
     if(cases) {
       cases = JSON.parse(cases);
     }
@@ -299,15 +287,8 @@ class CaseStrategy extends Component {
     let size = this.state.moduleList.length;
     for(let i = 0; i < size; i++) {
       let mod = this.state.moduleList[i];
-      tmpValue['before' + mod._id] = [];
-      tmpValue['beforeCount' + mod._id] = 1;
       tmpValue[mod._id] = [];
       tmpValue['checked' + mod._id] = false;
-      if(before && before[mod._id]){
-        let res = before[mod._id];
-        tmpValue['before' + mod._id] = res.list;
-        tmpValue['beforeCount' + mod._id] = res.count ? res.count : 1;
-      }
       if(cases && cases[mod._id]) {
         let res = cases[mod._id];
         tmpValue[mod._id] = res.list;
@@ -315,7 +296,6 @@ class CaseStrategy extends Component {
       }
     }
 
-    console.log(tmpValue);
     this.props.form.setFieldsValue(tmpValue);
   };
 
@@ -323,27 +303,20 @@ class CaseStrategy extends Component {
 
     this.props.form.validateFields(async (err) => {
       if (!err) {
-        const { is_open, env_id, cron, checked_step3 } = this.props.form.getFieldsValue();
+        const { is_open, env_id, cron } = this.props.form.getFieldsValue();
         let tmpValue = {
           _id: this.state.currentStrategy._id,
           uid: this.state.currentStrategy.uid,
           project_id: this.state.currentStrategy.project_id,
           is_open: is_open,
           env_id: env_id,
-          cron: cron,
-          checked_step3: checked_step3
+          cron: cron
         };
 
         let size = this.state.moduleList.length;
-        let beforeObj = {};
         let casesObj = {};
         for(let i = 0; i < size; i++) {
           let modId = this.state.moduleList[i]._id;
-
-          let before = {};
-          before.list = this.props.form.getFieldsValue()['before' + modId];
-          before.count = this.props.form.getFieldsValue()['beforeCount' + modId];
-          beforeObj[modId] = before;
 
           let cases = {};
           cases.list = this.props.form.getFieldsValue()[modId];
@@ -351,7 +324,6 @@ class CaseStrategy extends Component {
           casesObj[modId] = cases;
         }
 
-        tmpValue.before = JSON.stringify(beforeObj);
         tmpValue.cases = JSON.stringify(casesObj);
 
         this.editStrategy(tmpValue);
@@ -364,7 +336,7 @@ class CaseStrategy extends Component {
     const { getFieldDecorator } = this.props.form;
 
     return (
-      <Layout style={{ minHeight: 'calc(100vh - 156px)', marginLeft: '24px', marginTop: '24px' }}>
+      <Layout style={{ minHeight: 'calc(100vh - 156px)', marginLeft: '24px', marginTop: '34px' }}>
         <Sider style={{ height: '100%' }} width={240}>
           <div className="left-menu">
             <div className="left-menu-top">
@@ -418,7 +390,7 @@ class CaseStrategy extends Component {
                 }}
             >
             <div className="right-content">
-              <div style={{height: 40, fontSize: 18}}>STEP1：策略基本信息</div>
+              <div style={{height: 40, fontSize: 18}}>STEP1: 策略基本信息</div>
               <Form>
                 <FormItem label="开启策略" {...formItemLayout}>
                   {getFieldDecorator('is_open', {
@@ -450,35 +422,14 @@ class CaseStrategy extends Component {
                   </Select>)}
                 </FormItem>
 
-                <div style={{height: 40, fontSize: 18}}>STEP2：数据准备，选择模块中以Prep开头的测试集（白名单），并设置运行次数</div>
-                {
-                  this.state.moduleList.map((item, index) => (
-                    <FormItem {...formItemLayout} label={item.name} key={index}>
-                      {getFieldDecorator("before" + item._id, {
-                        })(<Select mode="tags">
-                          {
-                            this.getOption(item._id, true)
-                          }
-                        </Select>)}
-                      循环执行次数&nbsp;
-                      {getFieldDecorator("beforeCount" + item._id, {
-                      })(<InputNumber  />)}
-                    </FormItem>
-
-                  ))
-                }
-
-                <div style={{height: 40, fontSize: 18}}>STEP3：按模块分别执行测试集（黑名单），模块中被选择的测试集将不被执行</div>
-                {getFieldDecorator("checked_step3", {
-                  valuePropName: 'checked'
-                })(<Checkbox>停用Step3</Checkbox>)}
+                <div style={{height: 40, fontSize: 18, marginTop: 50}}>STEP2: 按模块执行测试集，模块中被选择的测试集将不被执行，勾选全部禁用后，该模块将不被执行</div>
                 {
                   this.state.moduleList.map((item, index) => (
                     <FormItem {...formItemLayout} label={item.name} key={index}>
                       {getFieldDecorator("" + item._id, {
                         })(<Select mode="tags">
                           {
-                            this.getOption(item._id, false)
+                            this.getOption(item._id)
                           }
                         </Select>)}
                       {getFieldDecorator("checked" + item._id, {

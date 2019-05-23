@@ -91,17 +91,20 @@ class strategyController extends baseController {
       params = yapi.commons.handleParams(params, {
         env_id: 'string',
         cron: 'string',
-        before: 'string',
         cases: 'string',
         _id: 'number'
       });
+
+      if (!params._id) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '策略id不能为空'));
+      }
 
       let result = await this.Model.up(params);
       ctx.body = yapi.commons.resReturn(result);
 
       this.strategyUtil.deleteSyncJob(params._id);
       if(params.is_open){
-        this.strategyUtil.addSyncJob(params._id, params.project_id, params.env_id, params.cron, params.before, params.cases, params.uid, params.checked_step3);
+        this.strategyUtil.addSyncJob(params._id, params.project_id, params.env_id, params.cron, params.cases, params.uid);
       }
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);

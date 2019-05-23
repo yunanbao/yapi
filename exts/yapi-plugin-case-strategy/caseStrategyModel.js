@@ -12,10 +12,8 @@ class caseStrategyModel extends baseModel {
       uid: { type: Number, required: true },
       strategy_name: { type: String, required: true},
       is_open: { type: Boolean, default: false },
-      checked_step3: { type: Boolean, default: false },
       env_id: String,
       cron: String,
-      before: String,
       cases: String
     };
   }
@@ -75,10 +73,8 @@ class caseStrategyModel extends baseModel {
         },
         {
           is_open: data.is_open,
-          checked_step3: data.checked_step3,
           cron: data.cron,
           env_id: data.env_id,
-          before: data.before,
           cases: data.cases
         },
         { runValidators: true }

@@ -47,7 +47,7 @@ const defaultOptions = {
 
 exports.schemaToJson = function(schema, options = {}) {
   Object.assign(options, defaultOptions);
-  
+
   jsf.option(options);
   let result;
   try {
@@ -98,8 +98,9 @@ exports.log = (msg, type) => {
   let date = new Date();
   let year = date.getFullYear();
   let month = date.getMonth() + 1;
+  let day = date.getDay();
 
-  let logfile = path.join(yapi.WEBROOT_LOG, year + '-' + month + '.log');
+  let logfile = path.join(yapi.WEBROOT_LOG, year + '-' + month + '-' + day + '.log');
 
   if (typeof msg === 'object') {
     if (msg instanceof Error) msg = msg.message;
@@ -421,7 +422,7 @@ exports.createAction = (router, baseurl, routerController, action, path, method,
       await inst.init(ctx);
       ctx.params = Object.assign({}, ctx.request.query, ctx.request.body, ctx.params);
       if (inst.schemaMap && typeof inst.schemaMap === 'object' && inst.schemaMap[action]) {
-        
+
         let validResult = yapi.commons.validateParams(inst.schemaMap[action], ctx.params);
 
         if (!validResult.valid) {
@@ -547,7 +548,7 @@ exports.runCaseScript = async function runCaseScript(params, colId, interfaceId)
         throw ('Http status code 不是 200，请检查(该规则来源于于 [测试集->通用规则配置] )')
       }
     }
-  
+
     if(colData.checkResponseField.enable){
       if(params.response.body[colData.checkResponseField.name] != colData.checkResponseField.value){
         throw (`返回json ${colData.checkResponseField.name} 值不是${colData.checkResponseField.value}，请检查(该规则来源于于 [测试集->通用规则配置] )`)
