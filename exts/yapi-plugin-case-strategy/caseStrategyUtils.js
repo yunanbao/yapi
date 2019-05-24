@@ -70,7 +70,7 @@ class syncUtils {
         }
 
         let projectToken = await this.getProjectToken(projectId, uid);
-        this.syncInterface(uid, projectId, envName, projectToken, cases);
+        // this.syncInterface(uid, projectId, envName, projectToken, cases);
         let scheduleItem = schedule.scheduleJob(cron, async () => {
             this.syncInterface(uid, projectId, envName, projectToken, cases);
         });
@@ -149,7 +149,7 @@ class syncUtils {
           this.openController.runAutoTest(runAutoCaseList[0]);
           runAutoCaseList.shift();
           this.looperRunAutoTests();
-        }, 1000);
+        }, 3000);
       }
     }
 
@@ -163,7 +163,7 @@ class syncUtils {
         for(let i = 0; i < size; i++) {
             let tmp = caseList[i];
             if(tmp.module_id === moduleId) {
-                if(exps.indexOf(tmp._id) && !this.isPrepCase(tmp.name)) {
+                if(exps.indexOf(tmp._id) && !this.isBeyondCase(tmp.name)) {
                   cases.push(tmp);
                 }
             }
@@ -172,11 +172,11 @@ class syncUtils {
         return cases;
     }
 
-    isPrepCase(caseName) {
+    isBeyondCase(caseName) {
         if(!caseName) {
             return false;
         }
-        return caseName.toLowerCase().indexOf('prep') > -1
+        return caseName.toLowerCase().indexOf('prep') > -1 || caseName.toLowerCase().indexOf('dev') > -1
     }
 
     getSyncJob(_id) {

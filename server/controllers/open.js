@@ -262,18 +262,17 @@ class openController extends baseController {
       list: testList
     };
 
+    let envName = '';
+    let envKey = '';
+    if(curEnvList && curEnvList.length > 0){
+      envName = curEnvList[0].curEnv;
+      envKey = 'env_' + curEnvList[0].project_id;
+    }
+    let autoTestUrl = `/api/open/run_auto_test?id=${id}&token=${token}&${envKey}=${envName}&mode=${ctx.params.mode}`;
     if (reportsResult.message.failedNum !== 0) {
-      let envName = '';
-      let envKey = '';
-      if(curEnvList && curEnvList.length > 0){
-        envName = curEnvList[0].curEnv;
-        envKey = 'env_' + curEnvList[0].project_id;
-      }
-
       // let autoTestUrl = `${
       //     ctx.request.origin
       //     }/api/open/run_auto_test?id=${id}&token=${token}&${envKey}=${envName}&mode=${ctx.params.mode}`;
-      let autoTestUrl = `/api/open/run_auto_test?id=${id}&token=${token}&${envKey}=${envName}&mode=${ctx.params.mode}`;
       if(ctx.params.email === true) {
         yapi.commons.sendNotice(projectId, {
           title: `YApi自动化测试报告`,
@@ -304,6 +303,9 @@ class openController extends baseController {
       // }
       yapi.commons.log(ctx.params.moduleName, 'error');
       yapi.commons.log(autoTestUrl, 'error');
+    }else {
+      yapi.commons.log(ctx.params.moduleName);
+      yapi.commons.log(autoTestUrl);
     }
     let mode = ctx.params.mode || 'html';
     if(ctx.params.download === true) {
