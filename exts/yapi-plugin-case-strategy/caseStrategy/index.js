@@ -400,7 +400,7 @@ class CaseStrategy extends Component {
                       unCheckedChildren="关"
                   />)}
                 </FormItem>
-                <FormItem {...formItemLayout} label={<span>策略运行时间(类cron)&nbsp;<a target="_blank" href="https://blog.csdn.net/shouldnotappearcalm/article/details/89469047">参考</a></span>}>
+                <FormItem {...formItemLayout} label={<span>策略运行时间(类cron)&nbsp;<a href="https://blog.csdn.net/shouldnotappearcalm/article/details/89469047">参考</a></span>}>
                   {getFieldDecorator('cron', {
                     rules: [
                       {
