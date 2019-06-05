@@ -7,6 +7,7 @@ const followModel = require('../models/follow.js');
 const userModel = require('../models/user.js');
 const yapi = require('../yapi.js');
 const baseController = require('./base.js');
+const path = require('path');
 const {
   handleParams,
   crossRequest,
@@ -70,6 +71,8 @@ class openController extends baseController {
         }
       }
     };
+
+    this.caseRunResult = new Map();
   }
 
   async importData(ctx) {
@@ -292,21 +295,58 @@ class openController extends baseController {
         </html>`
         });
       }
-
-      // let log = '\n测试环境：' + envName;
-      // log += '\n测试集ID：' + id;
-      // log += '\n测试结果：' + reportsResult.message.msg;
-      // let size = reportsResult.list.length;
-      // for(let i = 0; i < size; i++) {
-      //   log += '\napi：' + reportsResult.list[i].path;
-      //   log += '\nResponse：' + JSON.stringify(reportsResult.list[i].res_body);
-      // }
-      yapi.commons.log(ctx.params.moduleName, 'error');
-      yapi.commons.log(autoTestUrl, 'error');
-    }else {
-      yapi.commons.log(ctx.params.moduleName);
-      yapi.commons.log(autoTestUrl);
     }
+
+    yapi.commons.log(ctx.params.moduleName, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
+    yapi.commons.log(reportsResult.message.msg + '---运行时长' + reportsResult.runTime, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
+    yapi.commons.log(autoTestUrl, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
+
+    // 统计测试集成功数和失败数
+    let item = this.caseRunResult.get(ctx.params.timestamp);
+    if(!item) {
+      item = {
+        success: 0,
+        failed: 0
+      };
+      this.caseRunResult.set(ctx.params.timestamp, item)
+    }
+    if(reportsResult.message.failedNum !== 0) {
+      item.failed = item.failed + 1;
+    } else {
+      item.success = item.success + 1;
+    }
+
+    // 如果是最后一条测试集， 发送统计邮件
+    if(ctx.params.isLastCase) {
+      let logPath = path.join(yapi.WEBROOT_LOG, ctx.params.timestamp + '.log');
+      let item = this.caseRunResult.get(ctx.params.timestamp);
+
+      yapi.commons.sendNotice(projectId, {
+        title: `YApi自动化测试报告` + ctx.params.timestamp,
+        attachments: [
+          {
+            filename: ctx.params.timestamp,
+            path: logPath
+          }
+        ],
+        content: `
+        <html>
+        <head>
+        <title>测试报告</title>
+        <meta charset="utf-8" />
+        <body>
+        <div>
+        <h3>测试结果：</h3>
+        <p>成功：${item.success} 条测试集</p>
+        <p>失败：${item.failed} 条测试集</p>
+        </div>
+        </body>
+        </html>`
+      }, 'qa@yunanbao.com.cn');
+
+      this.caseRunResult.delete(ctx.params.timestamp);
+    }
+
     let mode = ctx.params.mode || 'html';
     if(ctx.params.download === true) {
       ctx.set('Content-Disposition', `attachment; filename=test.${mode}`);

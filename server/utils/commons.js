@@ -69,7 +69,7 @@ exports.resReturn = (data, num, errmsg) => {
   };
 };
 
-exports.log = (msg, type) => {
+exports.log = (msg, type, logFileName) => {
   if (!msg) {
     return;
   }
@@ -101,6 +101,9 @@ exports.log = (msg, type) => {
   let day = date.getDay();
 
   let logfile = path.join(yapi.WEBROOT_LOG, year + '-' + month + '-' + day + '.log');
+  if(logFileName) {
+    logfile = path.join(yapi.WEBROOT_LOG, logFileName + '.log');
+  }
 
   if (typeof msg === 'object') {
     if (msg instanceof Error) msg = msg.message;
@@ -198,7 +201,8 @@ exports.sendMail = (options, cb) => {
         from: yapi.WEBCONFIG.mail.from,
         to: options.to,
         subject: options.subject,
-        html: options.contents
+        html: options.contents,
+        attachments: options.attachments
       },
       cb
     );
@@ -610,27 +614,33 @@ exports.getUserdata = async function getUserdata(uid, role) {
   };
 };
 // 邮件发送
-exports.sendNotice = async function(projectId, data) {
-  const followInst = yapi.getInst(followModel);
-  const userInst = yapi.getInst(userModel);
-  const projectInst = yapi.getInst(projectModel);
-  const list = await followInst.listByProjectId(projectId);
-  const starUsers = list.map(item => item.uid);
+exports.sendNotice = async function(projectId, data, toEmails) {
+  let emails;
+  if(toEmails) {
+    emails = toEmails;
+  }else {
+    const followInst = yapi.getInst(followModel);
+    const userInst = yapi.getInst(userModel);
+    const projectInst = yapi.getInst(projectModel);
+    const list = await followInst.listByProjectId(projectId);
+    const starUsers = list.map(item => item.uid);
 
-  const projectList = await projectInst.get(projectId);
-  const projectMenbers = projectList.members
-    .filter(item => item.email_notice)
-    .map(item => item.uid);
+    const projectList = await projectInst.get(projectId);
+    const projectMenbers = projectList.members
+        .filter(item => item.email_notice)
+        .map(item => item.uid);
 
-  const users = arrUnique(projectMenbers, starUsers);
-  const usersInfo = await userInst.findByUids(users);
-  const emails = usersInfo.map(item => item.email).join(',');
+    const users = arrUnique(projectMenbers, starUsers);
+    const usersInfo = await userInst.findByUids(users);
+    emails = usersInfo.map(item => item.email).join(',');
+  }
 
   try {
     yapi.commons.sendMail({
       to: emails,
       contents: data.content,
-      subject: data.title
+      subject: data.title,
+      attachments: data.attachments
     });
   } catch (e) {
     yapi.commons.log('邮件发送失败：' + e, 'error');

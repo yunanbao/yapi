@@ -70,7 +70,6 @@ class syncUtils {
         }
 
         let projectToken = await this.getProjectToken(projectId, uid);
-        // this.syncInterface(uid, projectId, envName, projectToken, cases);
         let scheduleItem = schedule.scheduleJob(cron, async () => {
             this.syncInterface(uid, projectId, envName, projectToken, cases);
         });
@@ -114,6 +113,16 @@ class syncUtils {
 
       if(cases) {
         cases = JSON.parse(cases);
+        let date = new Date();
+        let year = date.getFullYear();
+        let month = date.getMonth() + 1;
+        let day = date.getDay();
+        let hour = date.getHours() + 1;
+        let minute = date.getMinutes();
+        let second = date.getSeconds();
+        let mill = date.getMilliseconds();
+        let timestamp = year + '-' + month + '-' + day + '-' + hour + '-' + minute + '-' + second + '-' + mill;
+
         for(let i = 0; i < moduleSize; i++) {
           let tmpModule = moduleList[i];
           let tmpCase = cases[tmpModule._id];
@@ -130,14 +139,24 @@ class syncUtils {
             if(runCaseList && runCaseList.length > 0){
               let listSize = runCaseList.length;
               for(let j = 0; j < listSize; j++) {
-                // let url = initUrl + '&id=' + runCaseList[j]._id;
                 ctx.params.id = runCaseList[j]._id;
                 ctx.params.moduleName = tmpModule.name;
+                ctx.params.timestamp = timestamp;
+
                 runAutoCaseList.push(JSON.parse(JSON.stringify(ctx)));
               }
             }
           }
         }
+
+        let size = runAutoCaseList.length;
+        if(size && size > 0) {
+          let lastItem = runAutoCaseList[size - 1];
+          if(lastItem && lastItem.params) {
+            lastItem.params.isLastCase = true;
+          }
+        }
+
         this.looperRunAutoTests();
       }
 
@@ -149,7 +168,7 @@ class syncUtils {
           this.openController.runAutoTest(runAutoCaseList[0]);
           runAutoCaseList.shift();
           this.looperRunAutoTests();
-        }, 3000);
+        }, 15000);
       }
     }
 
