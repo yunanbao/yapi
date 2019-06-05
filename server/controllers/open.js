@@ -247,9 +247,9 @@ class openController extends baseController {
         }
       });
       if (failedNum === 0) {
-        msg = `一共 ${len} 测试用例，全部验证通过`;
+        msg = `${len} 个接口，全部验证通过`;
       } else {
-        msg = `一共 ${len} 测试用例，${successNum} 个验证通过， ${failedNum} 个未通过。`;
+        msg = `${len} 个接口，${successNum} 个验证通过， ${failedNum} 个未通过。`;
       }
 
       return { msg, len, successNum, failedNum };
@@ -336,7 +336,7 @@ class openController extends baseController {
         <meta charset="utf-8" />
         <body>
         <div>
-        <h3>测试结果：</h3>
+        <h3>API自动化测试结果：</h3>
         <p>成功：${item.success} 条测试集</p>
         <p>失败：${item.failed} 条测试集</p>
         </div>
