@@ -11,7 +11,7 @@ const sha = require('sha.js');
 // const https = require('https');
 const { getToken } = require('utils/token');
 const jobMap = new Map();
-let runAutoCaseList = [];
+let runAutoCaseMap = new Map();
 
 
 class syncUtils {
@@ -29,7 +29,6 @@ class syncUtils {
 
     //初始化定时任务
     async init() {
-        runAutoCaseList = [];
         let allSyncJob = await this.syncMode.listAll();
         for (let i = 0, len = allSyncJob.length; i < len; i++) {
             let syncItem = allSyncJob[i];
@@ -71,7 +70,7 @@ class syncUtils {
 
         let projectToken = await this.getProjectToken(projectId, uid);
         let scheduleItem = schedule.scheduleJob(cron, async () => {
-            this.syncInterface(uid, projectId, envName, projectToken, cases);
+            this.syncInterface(_id, uid, projectId, envName, projectToken, cases);
         });
 
         //判断是否已经存在这个任务
@@ -83,7 +82,7 @@ class syncUtils {
     }
 
     //同步接口
-    async syncInterface(uid, projectId, envName, projectToken, cases) {
+    async syncInterface(_id, uid, projectId, envName, projectToken, cases) {
         //获取项目下的所有的模块
         let moduleList = await this.moduleModel.list(projectId);
         if(!moduleList || moduleList.length === 0) {
@@ -117,11 +116,20 @@ class syncUtils {
         let year = date.getFullYear();
         let month = date.getMonth() + 1;
         let day = date.getDate();
-        let hour = date.getHours() + 1;
+        let hour = date.getHours();
         let minute = date.getMinutes();
         let second = date.getSeconds();
         let mill = date.getMilliseconds();
         let timestamp = year + '-' + month + '-' + day + '-' + hour + '-' + minute + '-' + second + '-' + mill;
+
+        let runAutoCaseList = runAutoCaseMap.get(_id);
+        if(!runAutoCaseList){
+          runAutoCaseList = [];
+          runAutoCaseMap.set(_id, runAutoCaseList);
+        }else if(runAutoCaseList.length > 0){
+          // map中策略对应的测试集还没有执行完毕，直接return掉
+          return;
+        }
 
         for(let i = 0; i < moduleSize; i++) {
           let tmpModule = moduleList[i];
@@ -157,19 +165,20 @@ class syncUtils {
           }
         }
 
-        this.looperRunAutoTests();
+        this.looperRunAutoTests(_id);
       }
 
     }
 
-    looperRunAutoTests() {
-      if(runAutoCaseList && runAutoCaseList.length > 0) {
-        setTimeout(() => {
+    looperRunAutoTests(strategyId) {
+      setTimeout(() => {
+        let runAutoCaseList = runAutoCaseMap.get(strategyId);
+        if(runAutoCaseList && runAutoCaseList.length > 0) {
           this.openController.runAutoTest(runAutoCaseList[0]);
           runAutoCaseList.shift();
-          this.looperRunAutoTests();
-        }, 15000);
-      }
+          this.looperRunAutoTests(strategyId);
+        }
+      }, 15000);
     }
 
 
