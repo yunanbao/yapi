@@ -98,7 +98,7 @@ exports.log = (msg, type, logFileName) => {
   let date = new Date();
   let year = date.getFullYear();
   let month = date.getMonth() + 1;
-  let day = date.getDay();
+  let day = date.getDate();
 
   let logfile = path.join(yapi.WEBROOT_LOG, year + '-' + month + '-' + day + '.log');
   if(logFileName) {
