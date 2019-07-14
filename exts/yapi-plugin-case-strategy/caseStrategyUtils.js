@@ -171,14 +171,27 @@ class syncUtils {
     }
 
     looperRunAutoTests(strategyId) {
-      setTimeout(() => {
-        let runAutoCaseList = runAutoCaseMap.get(strategyId);
-        if(runAutoCaseList && runAutoCaseList.length > 0) {
-          this.openController.runAutoTest(runAutoCaseList[0]);
-          runAutoCaseList.shift();
-          this.looperRunAutoTests(strategyId);
-        }
-      }, 15000);
+      let runTestId = 'runTestId' + strategyId;
+      let jobItem = jobMap.get(runTestId);
+      if (!jobItem) {
+        let scheduleItem = schedule.scheduleJob('*/20 * * * * *', async () => {
+          let runAutoCaseList = runAutoCaseMap.get(strategyId);
+          if(runAutoCaseList && runAutoCaseList.length > 0) {
+            this.openController.runAutoTest(runAutoCaseList[0]);
+            runAutoCaseList.shift();
+          }else {
+            let runTestId = 'runTestId' + strategyId;
+            let jobItem = jobMap.get(runTestId);
+            if(jobItem) {
+              jobItem.cancel();
+              jobMap.set(runTestId, null);
+              jobItem = null;
+            }
+          }
+        });
+
+        jobMap.set(runTestId, scheduleItem);
+      }
     }
 
 
