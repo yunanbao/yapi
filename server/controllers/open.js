@@ -297,9 +297,27 @@ class openController extends baseController {
       }
     }
 
-    yapi.commons.log(ctx.params.moduleName, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
-    yapi.commons.log(reportsResult.message.msg + '---运行时长' + reportsResult.runTime, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
-    yapi.commons.log(autoTestUrl, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
+    if(reportsResult.message.failedNum !== 0) {
+      yapi.commons.log(ctx.params.moduleName, 'error', ctx.params.timestamp);
+      yapi.commons.log(reportsResult.message.msg + '---运行时长' + reportsResult.runTime, 'error', ctx.params.timestamp);
+      yapi.commons.log(autoTestUrl, 'error', ctx.params.timestamp);
+
+      let caseCount = reportsResult.list ? reportsResult.list.length : 0;
+      if(caseCount > 0) {
+        let result = '\n';
+        for(let i = 0; i < caseCount; i++) {
+          let item = reportsResult.list[i];
+          if(item.res_body) {
+            result = result + 'code:' + item.res_body.code + ' msg:' + item.res_body.msg + '\n';
+          }
+        }
+
+        yapi.commons.log(result, 'error', ctx.params.timestamp);
+      }
+    }
+    //yapi.commons.log(ctx.params.moduleName, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
+    //yapi.commons.log(reportsResult.message.msg + '---运行时长' + reportsResult.runTime, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
+    //yapi.commons.log(autoTestUrl, reportsResult.message.failedNum !== 0 ? 'error' :'log', ctx.params.timestamp);
 
     // 统计测试集成功数和失败数
     let item = this.caseRunResult.get(ctx.params.timestamp);
